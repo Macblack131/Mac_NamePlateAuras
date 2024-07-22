@@ -1,0 +1,8 @@
+## Interface: 100205
+## Title: Mac_NamePlateAuras
+## Version: 1
+## Author: Mac
+## IconTexture: Interface\AddOns\Mac_NamePlateAuras\icon.tga
+
+Mac_NamePlateAuras.xml
+
