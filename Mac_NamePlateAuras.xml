@@ -3,15 +3,23 @@ UI_shared.xsd">
 
 <Script file="Mac_NamePlateAuras.lua" />
 
+<Frame name="Mac_BuffFrameTemplate" parentKey="Mac_BuffFrame" inherits="HorizontalLayoutFrame" mixin="Mac_NameplateBuffContainerMixin" virtual="true">
+    <Anchors>
+        <Anchor point="CENTER" x="0" y="22"/>
+    </Anchors>
+    <KeyValues>
+        <KeyValue key="spacing" value="4" type="number"/>
+        <KeyValue key="fixedHeight" value="14" type="number"/>
+    </KeyValues>
+    <Scripts>
+        <OnLoad method="OnLoad"/>
+    </Scripts>
+</Frame>
+
 <Frame name="Mac_NamePlateAuras" mixin="Mac_NamePlateAurasMixin">
- <Scripts>
-        <OnLoad>
-
-            self:OnLoad()
-
-        </OnLoad>
-        <OnEvent method="OnEvent" />
-
+    <Scripts>
+        <OnLoad method="OnLoad"/>
+        <OnEvent method="OnEvent"/>
     </Scripts>
 </Frame>
 
