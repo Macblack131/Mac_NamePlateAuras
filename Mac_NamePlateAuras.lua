@@ -8,85 +8,6 @@ local function AuraCheck(value, table)
   end
 end
 
-local aurasForEnemyPlayer =
-{
-  -- Воин 
-  132169, -- Удар Громоверца
-  385060, -- Ярость Одина
-  397364, -- Громогласный рык
-  184364, -- Безудержное восстановление
-  97462, -- Ободряющий клич
-  384100, -- Крик берсерка
-  23920, -- Отражение заклинаний
-  132168, -- Ударная волна
-  5246, -- Устрашающий крик
-  -- Другие 
-  --DEBUFFS
-  2139, -- Антимагия
-  15487, -- Безмолвие
-  25771, -- Воздержанность
-  147362, -- Встречный выстрел
-  64044, -- Глубинный ужас
-  31589, -- Замедление
-  187650, -- Замораживающая ловушка
-  375901, -- Игры разума
-  122, -- Кольцо льда
-  5116, -- Контузящий выстрел
-  383121, -- Массовое превращение
-  8122, -- Ментальный крик
-  853, -- Молот правосудия
-  2094, -- Ослепление
-  6770, -- Ошеломление
-  213691, -- Ошеломляющий выстрел
-  1776, -- Парализующий удар
-  1766, -- Пинок
-  1833, -- Подлый трюк
-  118, -- Превращение
-  115750, -- Слепящий свет
-  187698, -- Смоляная ловушка
-  408, -- Удар по почкам
-  96231, -- Укор
-  19577, -- Устрашение
-  --BUFFS
-  185311, -- Алый фиал
-  48707, -- Антимагический панцирь
-  1022, -- Благословение защиты
-  1044, -- Благословенная свобода
-  403876, -- Божественная защита
-  221883, -- Божественный скакун
-  642, -- Божественный щит
-  264735, -- Выживает сильнейший
-  22812, -- Дубовая кожа
-  186257, -- Дух гепарда
-  186265, -- Дух черепахи
-  6940, -- Жерственное благословение
-  122470, -- Закон кармы
-  19574, -- Звериный гнев
-  45438, -- Ледяная глыба
-  11426, -- Ледяная преграда
-  342245, -- Манипуляции со временем
-  19236, -- Молитва отчаяния
-  32612, -- Невидимость
-  48792, -- Незыблемость льда
-  47788, -- Оберегающий дух
-  781, -- Отрыв
-  31224, -- Плащ теней
-  33206, -- Подавление боли
-  272682, -- Приказ хозяина
-  53480, -- Рев жертвенности
-  47585, -- Слияние с Тьмой
-  17, -- Слово силы: Щит
-  2983, -- Спринт
-  1966, -- Уловка
-  5277, -- Ускользание
-  184662, -- Щит возмездия
-}
-
-local aurasForANonEnemyPlayer =
-{
-
-}
-
 Mac_NamePlateAurasMixin = {}
 
 function Mac_NamePlateAurasMixin:OnLoad()
@@ -134,26 +55,38 @@ function Mac_NameplateBuffContainerMixin:ParseAllAuras() -- Создаю таб�
   else
     self.auras:Clear()
   end
-  local function HandleAura(aura)
-    if useBuffTracking then -- Проверяет нужно ли использовать отслеживание баффов
-      if UnitIsEnemy("player", self.unit) and UnitPlayerControlled(self.unit) then   -- Проверяет являеться ли unit вражеским игроком
-        if AuraCheck(aura.spellId, aurasForEnemyPlayer) then   -- Проверяет находиться ли аура в таблице aurasForEnemyPlayer
-          self.auras[aura.auraInstanceID] = aura
+  local function ForEachAura(filter)
+    local auraFilterForEnemyPlayers
+    local auraFilterForNonEnemyPlayers
+    if filter == "HELPFUL" then
+      auraFilterForEnemyPlayers = Mac_auraFilterForEnemyPlayers.buffs
+      auraFilterForNonEnemyPlayers = Mac_auraFilterForNonEnemyPlayers.buffs
+    elseif filter == "HARMFUL" then
+      auraFilterForEnemyPlayers = Mac_auraFilterForEnemyPlayers.deBuffs
+      auraFilterForNonEnemyPlayers = Mac_auraFilterForNonEnemyPlayers.deBuffs
+    end
+    local function HandleAura(aura)
+      if useBuffTracking then -- Проверяет нужно ли использовать отслеживание баффов
+        if UnitIsEnemy("player", self.unit) and UnitPlayerControlled(self.unit) then   -- Проверяет являеться ли unit вражеским игроком
+          if AuraCheck(aura.spellId, auraFilterForEnemyPlayers) then   -- Проверяет находиться ли аура в таблице aurasForEnemyPlayer
+            self.auras[aura.auraInstanceID] = aura
+          end
+        else
+          if AuraCheck(aura.spellId, auraFilterForNonEnemyPlayers) then   -- Проверяет находиться ли аура в таблице aurasForANonEnemyPlayer
+            self.auras[aura.auraInstanceID] = aura
+          end
         end
       else
-        if AuraCheck(aura.spellId, aurasForANonEnemyPlayer) then   -- Проверяет находиться ли аура в таблице aurasForANonEnemyPlayer
-          self.auras[aura.auraInstanceID] = aura
-        end
+        self.auras[aura.auraInstanceID] = aura
       end
-    else
-      self.auras[aura.auraInstanceID] = aura
+      return false
     end
-    return false
+    local batchCount = nil
+    local usePackedAura = true
+    AuraUtil.ForEachAura(self.unit, filter, batchCount, HandleAura, usePackedAura)
   end
-  local batchCount = nil
-  local usePackedAura = true
-  AuraUtil.ForEachAura(self.unit, "HELPFUL", batchCount, HandleAura, usePackedAura)
-  AuraUtil.ForEachAura(self.unit, "HARMFUL", batchCount, HandleAura, usePackedAura)
+  ForEachAura("HELPFUL")
+  ForEachAura("HARMFUL")
 end
 
 function Mac_NameplateBuffContainerMixin:UpdateBuffs(unit)
